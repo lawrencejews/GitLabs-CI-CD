@@ -2,6 +2,7 @@ stages:
     - .pre
     - build
     - test
+    
 build website:
     image: node:16-alpine
     stage: build
@@ -11,6 +12,7 @@ build website:
     artifacts:
         paths:
             - build
+
 linter:
     image: node:16-alpine
     stage: .pre
@@ -19,10 +21,14 @@ linter:
         - yarn lint 
         
 test website:
-    image: alpine
+    image: node:16-alpine
     stage: test 
     script:
-        - test -f build/index.html
+        - yarn global add serve 
+        - apk add curl
+        - serve -s build &
+        - sleep 10
+        - curl http://localhost:3000 | grep "React App"
 
 unit tests:
     image: node:16-alpine
