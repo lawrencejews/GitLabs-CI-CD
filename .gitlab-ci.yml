@@ -2,6 +2,7 @@ stages:
     - build
     - package
     - test
+    - deploy
     # - test
     # - deploy staging
     # - deploy production
@@ -22,7 +23,7 @@ build website:
         paths:
             - build
 
-build docker image:
+.build docker image:
     stage: package
     image: docker:20.10.12
     services:
@@ -33,7 +34,7 @@ build docker image:
         - docker image ls
         - docker push --all-tags $CI_REGISTRY_IMAGE
 
-test docker image:
+.test docker image:
     stage: test 
     image: curlimages/curl
     services:
@@ -41,6 +42,23 @@ test docker image:
           alias: website
     script:
         - curl http://website/version.html | grep $APP_VERSION
+
+deploy to production:
+    image:
+        name: amazon/aws-cli:2.4.11
+        entrypoint: [""]
+    stage: deploy
+    environment: production
+    script:
+        - aws --version 
+        - yum install -y gettext
+        - export DEPLOY_TOKEN=$(echo $GITLAB_DEPLOY_TOKEN | td -d "\n" | base64)
+        - envsubst < template/Dockerrun.aws.json > Dockerrun.aws.json
+        - envsubst < template/auth.json > auth.json
+        - cat Dockerrun.aws.json
+        - cat auth.json
+        - aws s3 cp Dockerrun.aws.json s3://$AWS_S3_BUCKET/Dockerrun.aws.json 
+        - aws s3 cp auth.json s3://$AWS_S3_BUCKET/auth.json
 
 # test website:
 #     image: node:16-alpine
