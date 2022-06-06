@@ -10,7 +10,7 @@ stages:
 variables:
     APP_VERSION: $CI_PIPELINE_IID
 
-.build website:
+build website:
     image: node:16-alpine
     stage: build
     script:
@@ -23,7 +23,7 @@ variables:
         paths:
             - build
 
-.build docker image:
+build docker image:
     stage: package
     image: docker:20.10.12
     services:
@@ -34,7 +34,7 @@ variables:
         - docker image ls
         - docker push --all-tags $CI_REGISTRY_IMAGE
 
-.test docker image:
+test docker image:
     stage: test 
     image: curlimages/curl
     services:
@@ -48,6 +48,9 @@ deploy to production:
         name: amazon/aws-cli:2.4.11
         entrypoint: [""]
     stage: deploy
+    variables:
+        APP_NAME: my website
+        APP_NAME_ENV: Mywebsite-env
     environment: production
     script:
         - aws --version 
@@ -59,6 +62,8 @@ deploy to production:
         - cat auth.json
         - aws s3 cp Dockerrun.aws.json s3://$AWS_S3_BUCKET/Dockerrun.aws.json 
         - aws s3 cp auth.json s3://$AWS_S3_BUCKET/auth.json
+        - aws elasticbeanstalk create-application-version --application-name "$APP_NAME" --version-label $APP_VERSION --source-bundle S3Bucket=$AWS_S3_BUCKET,S3Key=Dockerrun.aws.json
+        - aws elasticbeanstalk update-environment --application-name "$APP_NAME" --version-label $APP_VERSION --environment-name $APP_NAME_ENV
 
 # test website:
 #     image: node:16-alpine
