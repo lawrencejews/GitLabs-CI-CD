@@ -51,6 +51,7 @@ deploy to production:
     variables:
         APP_NAME: my website
         APP_NAME_ENV: Mywebsite-env
+        AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
     environment: production
     script:
         - aws --version 
